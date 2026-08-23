@@ -1,0 +1,59 @@
+#!/bin/csh -f
+#############################################################
+#
+#  syn - load a Synopsys tool and PDK environment.
+#
+#  Author:   Sne Samal
+#  Date:     2026-08-23
+#  Version:  1.0
+#
+#    syn              list the available kits
+#    syn tsmc65LP     load the TSMC 65nm low power kit
+#    exit             unload, back to the shell you came from
+#
+#  Mirrors pdk: replaces your shell with a fresh tcsh carrying the
+#  environment, so one kit is loaded at a time.
+#
+#############################################################
+
+# Absolute path to this script's directory, so setup.cshrc and kits/
+# are found relative to it wherever the repo is checked out.
+set tools_dir = `cd $0:h && pwd`
+
+# One kit per shell.
+if ( $?SYN_ENV_LOADED ) then
+    echo "A PDK ($SYN_KIT) is already loaded."
+    echo "Type 'exit' to unload it first, then load another."
+    exit 1
+endif
+
+# No argument: list every kits/*.cshrc with its DESCRIPTION line.
+if ( "$1" == "" ) then
+    echo "Synopsys environment setup: usage 'syn KIT_ID'"
+    echo "Example: 'syn tsmc65LP'"
+    echo ""
+    echo "-----------------------------------------------------------"
+    echo "KIT_ID          TECHNOLOGY"
+    echo "-----------------------------------------------------------"
+    # Backticks, not a glob in the foreach list: an empty kits/ would
+    # abort the script with "foreach: No match."
+    set kitfiles = `ls $tools_dir/kits/*.cshrc |& grep -v "No match"`
+    foreach k ( $kitfiles )
+        set name = $k:t:r
+        set desc = `sed -n 's/^# *DESCRIPTION: *//p' $k | head -1`
+        printf '%-15s %s\n' "$name" "$desc"
+    end
+    echo "-----------------------------------------------------------"
+    exit 0
+endif
+
+# Reject an unknown kit here rather than half-loading an environment.
+if ( ! -f "$tools_dir/kits/$1.cshrc" ) then
+    echo "No PDK named '$1'. Run 'syn' with no argument to list them."
+    exit 1
+endif
+
+# Hand setup.cshrc the two variables it needs, then leave the user in
+# an interactive shell. Any variable already exported (SYN_NDM_DIR, a
+# SNPS_*_VERSION pin) is inherited and wins.
+exec tcsh -c "setenv SYN_TOOLS_DIR $tools_dir; setenv SYN_KIT $1; source $tools_dir/setup.cshrc; exec tcsh"
