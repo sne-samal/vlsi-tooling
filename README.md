@@ -24,25 +24,28 @@ Prerequisites: a machine with the Synopsys install under `/eda/synopsys`, the TS
 1. **Get the files onto the server.** From your local checkout:
 
    ```bash
-   scp -r labs_synopsys <user>@ee-mill2.ee.ic.ac.uk:~/
+   cd ~
+   mkdir Labs
+   cd Labs
+   git clone git@github.com:sne-samal/vlsi-tooling.git
    ```
 
 2. **Make the wrapper executable.** `scp` does not always preserve the bit:
 
    ```bash
-   chmod +x ~/labs_synopsys/tools/syn
+   chmod +x ~/Labs/tools/syn
    ```
 
 3. **List the available kits.** Confirms the wrapper runs and finds `kits/`:
 
    ```bash
-   ~/labs_synopsys/tools/syn
+   ~/Labs/tools/syn
    ```
 
 4. **Load a kit.** This replaces your shell with a fresh `tcsh` carrying the environment:
 
    ```bash
-   ~/labs_synopsys/tools/syn tsmc65LP
+   ~/Labs/tools/syn tsmc65LP
    ```
 
    It prints a `--- tools ---` block with the resolved path of each tool, then the kit's
@@ -63,14 +66,14 @@ Prerequisites: a machine with the Synopsys install under `/eda/synopsys`, the TS
    converts LEF plus Liberty `.db` into NDM. Output is about 36 MB:
 
    ```bash
-   lm_shell -f ~/labs_synopsys/tools/build_ndm.tcl
+   lm_shell -f ~/Labs/tools/build_ndm.tcl
    ```
 
 7. **Verify the build.** Checks contents rather than exit status, because a failed build
    can still exit cleanly with an empty library:
 
    ```bash
-   fc_shell -batch -f ~/labs_synopsys/tools/check_ndm.tcl
+   fc_shell -batch -f ~/Labs/tools/check_ndm.tcl
    ```
 
    Expect `PASS` and `special cells : all 28 present`.
