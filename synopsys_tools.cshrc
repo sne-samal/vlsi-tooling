@@ -17,6 +17,8 @@
 
 # SITE: install root on ee-mill2. Change for another machine.
 setenv SYN_DIR /eda/synopsys/2025-26/RHELx86
+setenv CDSHOME /eda/cadence/2025-26/RHELx86/IC_25.10.030
+setenv CDS_INST_DIR /eda/cadence/2025-26/RHELx86/IC_25.10.030
 
 # Warn rather than exit: this file is sourced, so "exit" would kill the
 # user's shell.
@@ -99,6 +101,14 @@ unset snps_tools row tpfx tvar tdir
 if ( $?SNPS_VCS )   setenv VCS_HOME   "$SNPS_VCS"
 if ( $?SNPS_VERDI ) setenv VERDI_HOME "$SNPS_VERDI"
 if ( $?SNPS_VERDI ) setenv NOVAS_HOME "$SNPS_VERDI"
+
+# --- Lab wrappers ---------------------------------------------------
+# Puts "custom" (and "syn" itself) on PATH, so a student can launch the
+# GUI from whichever lab directory they are working in rather than
+# spelling out a relative path to tools/. Mirrors how the Cadence
+# "cadence" script lived on PATH via $CDS_TOP/../bin.
+
+if ( $?SYN_TOOLS_DIR ) setenv PATH "${PATH}:$SYN_TOOLS_DIR"
 
 # Rebuild the command hash table so the new PATH takes effect now.
 rehash

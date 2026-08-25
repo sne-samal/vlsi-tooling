@@ -47,12 +47,12 @@ else
         # Report what actually resolved, so a missing tool or a moved
         # install shows up now instead of as "command not found" later.
         echo "--- tools ---"
-        foreach t ( fc_shell dc_shell icc2_shell vcs vlogan verdi icv lc_shell pt_shell fm_shell StarXtract )
+        foreach t ( fc_shell dc_shell icc2_shell custom_compiler vcs vlogan verdi icv lc_shell pt_shell fm_shell StarXtract )
             set p = `which $t |& head -1`
             if ( $status == 0 ) then
-                printf '  %-11s %s\n' "$t" "$p"
+                printf '  %-15s %s\n' "$t" "$p"
             else
-                printf '  %-11s NOT ON PATH\n' "$t"
+                printf '  %-15s NOT ON PATH\n' "$t"
             endif
         end
         unset t p
@@ -61,6 +61,7 @@ else
         echo "  tech file   $SYN_TECH_FILE"
         echo "  ref libs    $SYN_REF_LIBS"
         echo "  tcl setup   $SYN_KIT_TCL"
+        echo "  lib.defs    $SYN_LIBDEFS"
         echo "--- licences ---"
         echo "  $SNPSLMD_LICENSE_FILE"
 

@@ -16,8 +16,18 @@
 #
 #############################################################
 
-# SITE: TSMC back-end libraries on ee-mill2. Change for another machine.
-setenv TSMC65_HOME /eda/cadence_tools/kits/tsmc/beLibs/65nm/TSMCHOME/digital
+# SITE: TSMC libraries on ee-mill2. Change for another machine.
+# Two separate deliveries, and Lab 2 needs both. TSMCHOME/digital is the
+# back-end kit: LEF, Milkyway, Liberty, Verilog. 65n_LP is the front-end
+# PDK: the OpenAccess technology library, Calibre decks and display file.
+setenv TSMC65_TSMCHOME /eda/cadence_tools/kits/tsmc/beLibs/65nm/TSMCHOME
+setenv TSMC65_HOME     $TSMC65_TSMCHOME/digital
+setenv TSMC65_PDK      /eda/cadence_tools/kits/tsmc/65n_LP
+
+# TSMC's own tsmcBE.lib, which lib.defs INCLUDEs, expands this name to
+# reach the standard cell libraries. Custom Compiler will define nothing
+# without it.
+setenv TSMC_PDK_PATH   $TSMC65_PDK
 
 # 9 metal layers, top 2 thick.
 setenv TSMC65_STACK   9lmT2
@@ -63,6 +73,33 @@ setenv SYN_TLUPLUS_TYP $SYN_TLUPLUS_DIR/cln65lp_1p09m+alrdl_typical_top2.tluplus
 # --- Simulation models ----------------------------------------------
 
 setenv SYN_SIM_MODELS $TSMC65_HOME/Front_End/verilog/tcbn65lpbwp7t_141a/${TSMC65_STDCELL}.v
+
+# --- OpenAccess, for Custom Compiler (Lab 2) -------------------------
+# Lab 1 reads the cells as LEF plus .db. Lab 2 needs the same cells as
+# mask polygons, which live in the front-end PDK's OpenAccess tree.
+#
+# Custom Compiler reads lib.defs from its launch directory and nowhere
+# else, so "custom" copies this file there. It names the technology and
+# sealring libraries outright and INCLUDEs TSMC's own tsmcBE.lib for the
+# cell libraries; tsmcBE.lib expands $TSMC_PDK_PATH to reach them, which
+# is why that variable is exported above.
+#
+# Adding a library to the lab means adding a DEFINE line here, not
+# editing a lab directory.
+
+setenv SYN_LIBDEFS     $SYN_TOOLS_DIR/kits/tsmc65LP.libdefs
+
+# Layer colours and fill patterns. Cadence ASCII, read from the launch
+# directory, copied there by "custom" as the Cadence lab did.
+setenv SYN_DISPLAY_DRF $TSMC65_PDK/display.drf
+
+# --- Signoff rule decks ----------------------------------------------
+# The kit ships no ICV runsets, so DRC and LVS point at Calibre. These
+# replace the /usr/local/cadence paths in the old Cadence lab, which do
+# not exist on this server.
+
+setenv TSMC65_DRC_RULES $TSMC65_PDK/Calibre/drc/calibre.drc
+setenv TSMC65_LVS_RULES $TSMC65_PDK/Calibre/lvs/calibre.lvs
 
 # --- Tcl half, sourced by every lab script --------------------------
 

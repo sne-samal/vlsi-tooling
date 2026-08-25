@@ -1,0 +1,83 @@
+#!/bin/csh -f
+#############################################################
+#
+#  custom - seed a working directory and launch Custom Compiler.
+#
+#  Author:   Sne Samal
+#  Date:     2026-08-25
+#  Version:  2.0
+#
+#      tools/syn tsmc65LP      load tools + PDK  (once per shell)
+#      cd Lab_2
+#      custom &                seed the directory, then launch
+#
+#  The Synopsys counterpart of the Cadence "cadence &" script, which
+#  copied cds.lib and display.drf out of the PDK before starting
+#  Virtuoso. Same job, with lib.defs in place of cds.lib.
+#
+#  Why seed at all: Custom Compiler reads lib.defs from the directory it
+#  is launched from and nowhere else. Launch without one and Library
+#  Manager comes up empty, with no error.
+#
+#  Both copies are guarded on non-existence, as the Cadence
+#  tsmcsetup.cshrc was. Custom Compiler appends to lib.defs when you
+#  create a library, so overwriting it would delete your work.
+#
+#############################################################
+
+# --- Preconditions --------------------------------------------------
+
+if ( ! $?SYN_ENV_LOADED ) then
+    echo "ERROR: no PDK loaded."
+    echo "       Run 'tools/syn tsmc65LP' first, then 'custom' from the lab directory."
+    exit 1
+endif
+
+if ( ! $?SYN_LIBDEFS ) then
+    echo "ERROR: kit '$SYN_KIT' sets no SYN_LIBDEFS, so there is no library list to seed."
+    exit 1
+endif
+
+if ( ! -f "$SYN_LIBDEFS" ) then
+    echo "ERROR: library list $SYN_LIBDEFS does not exist."
+    exit 1
+endif
+
+# -x on the captured path, not $status: a backtick pipeline reports the
+# status of "head", which always succeeds, so a missing tool would slip
+# through a $status test.
+set ccbin = `which custom_compiler |& head -1`
+if ( ! -x "$ccbin" ) then
+    echo "ERROR: custom_compiler is not on PATH."
+    echo "       Check the CUSTOM-COMP row in tools/synopsys_tools.cshrc."
+    exit 1
+endif
+
+# --- Seed the directory ---------------------------------------------
+
+if ( -e lib.defs ) then
+    echo "lib.defs already here, left untouched."
+else
+    cp "$SYN_LIBDEFS" lib.defs
+    if ( $status != 0 ) then
+        echo "ERROR: could not write lib.defs in `pwd`. Is the directory writable?"
+        exit 1
+    endif
+    chmod u+w lib.defs
+    echo "lib.defs copied from $SYN_LIBDEFS"
+endif
+
+if ( $?SYN_DISPLAY_DRF ) then
+    if ( -f "$SYN_DISPLAY_DRF" && ! -e display.drf ) then
+        cp "$SYN_DISPLAY_DRF" display.drf
+        chmod u+w display.drf
+        echo "display.drf copied from $SYN_DISPLAY_DRF"
+    endif
+endif
+
+# --- Launch ---------------------------------------------------------
+# argv passes through, so a later lab can add tool options without
+# editing this script.
+
+echo "--- starting custom_compiler ---"
+exec custom_compiler $argv:q

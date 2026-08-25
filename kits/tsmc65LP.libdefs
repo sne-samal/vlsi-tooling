@@ -1,0 +1,3 @@
+DEFINE tsmcN65 /eda/cadence_tools/kits/tsmc/65n_LP/tsmcN65
+DEFINE SEALRING /eda/cadence_tools/kits/tsmc/65n_LP/tsmc_libraries/TSMCHOME/SEALRING
+INCLUDE /eda/cadence_tools/kits/tsmc/65n_LP/tsmcBE.lib

@@ -7,15 +7,20 @@ Everything needed to get Fusion Compiler and a PDK onto `PATH` for the labs. Rep
 | File | Purpose |
 |---|---|
 | `syn` | User-facing command. Lists kits, or loads one into a fresh `tcsh`. |
+| `custom` | User-facing command. Seeds the working directory, then launches Custom Compiler. Lab 2 onwards. |
 | `setup.cshrc` | Entry point. Sources the tool file, then the kit file, then reports both. |
 | `synopsys_tools.cshrc` | `PATH`, licence servers, per-tool version discovery. PDK-independent. |
 | `kits/<kit>.cshrc` | Every path for one PDK, exported to the environment. |
 | `kits/<kit>.tcl` | The same paths under shorter names, plus cell names, corners and layers. Lab scripts source this. |
+| `kits/<kit>.libdefs` | Library list. `custom` copies it to `./lib.defs`. |
 | `build_ndm.tcl` | One-time build of the NDM reference libraries Fusion Compiler needs. |
 | `check_ndm.tcl` | Verifies that build produced usable libraries. |
 
 - Load order is `syn` -> `setup.cshrc` -> `synopsys_tools.cshrc` -> `kits/<kit>.cshrc`.
-- Adding a tool is one row in a table; adding a PDK is two files in `kits/`.
+- Adding a tool is one row in a table; adding a PDK is two files in `kits/`, three if the
+  PDK is used from Custom Compiler.
+- `syn` sets up a shell. `custom` sets up a *directory*, then starts a GUI in it. They are
+  the counterparts of the Cadence `pdk` and `cadence` commands respectively.
 
 ## Setup
 
@@ -81,9 +86,32 @@ Prerequisites: a machine with the Synopsys install under `/eda/synopsys`, the TS
 8. **Unload** with `exit`, which drops you back into the shell you started from. Only one
    kit can be loaded at a time; load another by exiting first.
 
+## Launching Custom Compiler
+
+Lab 1 is entirely batch, so `syn` is all it needs. Lab 2 is a GUI lab, and Custom Compiler
+will not find a single standard cell unless the directory it is launched from contains a
+`lib.defs` naming the OpenAccess libraries. There is no error when that file is absent:
+Library Manager simply comes up empty.
+
+```bash
+tools/syn tsmc65LP     # once per shell
+cd Lab_2
+custom &
+```
+
+`custom` does two things before starting the tool, both guarded on the file not already
+being there, exactly as the Cadence `tsmcsetup.cshrc` was:
+
+1. Copies `kits/<kit>.libdefs` to `./lib.defs`. **An existing `lib.defs` is never
+   overwritten**, because Custom Compiler appends to it when a student creates their own
+   library.
+2. Copies `display.drf` if the kit provides one.
+
+NOTE - still can't see layouts on standard cells
+
 ## Site-specific values
 
-Four values are hardcoded to this server and account. Each is marked in the scripts with a
+Five values are hardcoded to this server and account. Each is marked in the scripts with a
 `SITE:` comment, so:
 
 ```bash
@@ -96,6 +124,7 @@ grep -rn "SITE:" tools/
 | `SNPSLMD_LICENSE_FILE` | `synopsys_tools.cshrc` | Three Imperial EEE licence servers | Using different license location(s). |
 | `TSMC65_HOME` | `kits/tsmc65LP.cshrc` | `/eda/cadence_tools/kits/tsmc/beLibs/65nm/TSMCHOME/digital` | The TSMC kit is installed elsewhere. |
 | `SYN_NDM_DIR` | `kits/tsmc65LP.cshrc` | `$HOME/vlsi_ndm` | You want one shared read-only library rather than a copy per user. |
+| PDK root in `lib.defs` | `kits/tsmc65LP.libdefs` | `/eda/cadence_tools/kits/tsmc/65n_LP` | The front-end TSMC PDK is installed elsewhere. Copied verbatim, so the paths are literal. |
 
 `SYN_NDM_DIR` is the one most likely to need changing, and it does not require editing the
 file. Export it before loading, and the kit will use it:
@@ -136,6 +165,9 @@ Two files in `kits/`, and nothing else:
 - `<kit>.tcl` - reads those variables back out of the environment, and adds the
   library-specific knowledge that has no shell equivalent: cell names, corner labels,
   routing directions, site name.
+- `<kit>.libdefs` - only if the PDK is used from Custom Compiler. The OpenAccess libraries
+  to define, copied verbatim into the launch directory, so it holds literal paths.
+  `<kit>.cshrc` must point `SYN_LIBDEFS` at it.
 
 Lab scripts never contain a PDK path. They open with `source $env(SYN_KIT_TCL)` and use the
 names defined there, so switching PDK is a matter of loading a different kit.
