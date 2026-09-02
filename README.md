@@ -56,7 +56,6 @@ Prerequisites: a machine with the Synopsys install under `/eda/synopsys`, the TS
    It prints a `--- tools ---` block with the resolved path of each tool, then the kit's
    tech file, reference libraries and Tcl setup, then the licence servers. Any tool
    showing `NOT ON PATH` means no matching directory was found under `$SYN_DIR`.
-   `lm_shell`, used in step 6, is not in that list; check it with `which lm_shell`.
 
 5. **Check the environment by hand** (optional):
 
