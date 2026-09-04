@@ -47,7 +47,7 @@ else
         # Report what actually resolved, so a missing tool or a moved
         # install shows up now instead of as "command not found" later.
         echo "--- tools ---"
-        foreach t ( fc_shell dc_shell icc2_shell custom_compiler vcs vlogan verdi icv lc_shell pt_shell fm_shell StarXtract )
+        foreach t ( fc_shell dc_shell icc2_shell custom_compiler vcs vlogan verdi icv lc_shell lm_shell pt_shell fm_shell StarXtract )
             set p = `which $t |& head -1`
             if ( $status == 0 ) then
                 printf '  %-15s %s\n' "$t" "$p"
