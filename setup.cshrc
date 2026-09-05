@@ -1,6 +1,6 @@
 #############################################################
 #
-#  Entry point for the Synopsys lab environment.
+#  Entry point for the Synopsys tool environment.
 #  Loads the tools, then one PDK kit, then reports both.
 #
 #  Author:   Sne Samal
@@ -44,8 +44,7 @@ else
 
         setenv SYN_ENV_LOADED 1
 
-        # Report what actually resolved, so a missing tool or a moved
-        # install shows up now instead of as "command not found" later.
+        # Report what resolved.
         echo "--- tools ---"
         foreach t ( fc_shell dc_shell icc2_shell custom_compiler vcs vlogan verdi icv lc_shell lm_shell pt_shell fm_shell StarXtract )
             set p = `which $t |& head -1`
@@ -60,8 +59,22 @@ else
         echo "--- kit: $SYN_KIT ---"
         echo "  tech file   $SYN_TECH_FILE"
         echo "  ref libs    $SYN_REF_LIBS"
+
+        # The reference libraries are built once, not shipped.
+        #
+        # TODO once ndm_search names the shared copy, reword this: the
+        # build is not something every user should run.
+        foreach l ( $SYN_REF_LIBS )
+            if ( ! -e "$l" ) then
+                echo "  NOT BUILT   run: lm_shell -f \$SYN_TOOLS_DIR/build_ndm.tcl"
+                break
+            endif
+        end
+        unset l
+
         echo "  tcl setup   $SYN_KIT_TCL"
         echo "  lib.defs    $SYN_LIBDEFS"
+        if ( $?SYN_MEMCOMP_DIR ) echo "  memcomp     $SYN_MEMCOMP_DIR"
         echo "--- licences ---"
         echo "  $SNPSLMD_LICENSE_FILE"
 

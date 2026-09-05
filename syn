@@ -11,13 +11,13 @@
 #    syn tsmc65LP     load the TSMC 65nm low power kit
 #    exit             unload, back to the shell you came from
 #
-#  Mirrors pdk: replaces your shell with a fresh tcsh carrying the
-#  environment, so one kit is loaded at a time.
+#  Replaces your shell with a fresh tcsh carrying the environment, so
+#  one kit is loaded at a time.
 #
 #############################################################
 
-# Absolute path to this script's directory, so setup.cshrc and kits/
-# are found relative to it wherever the repo is checked out.
+# This script's directory, so setup.cshrc and kits/ are found wherever
+# the repo is checked out.
 set tools_dir = `cd $0:h && pwd`
 
 # One kit per shell.
@@ -35,8 +35,8 @@ if ( "$1" == "" ) then
     echo "-----------------------------------------------------------"
     echo "KIT_ID          TECHNOLOGY"
     echo "-----------------------------------------------------------"
-    # Backticks, not a glob in the foreach list: an empty kits/ would
-    # abort the script with "foreach: No match."
+    # Backticks, not a glob: an empty kits/ would abort the script
+    # with "foreach: No match."
     set kitfiles = `ls $tools_dir/kits/*.cshrc |& grep -v "No match"`
     foreach k ( $kitfiles )
         set name = $k:t:r

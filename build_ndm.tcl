@@ -6,15 +6,13 @@
 ##  Date:     2026-08-23
 ##  Version:  1.0
 ##
-##  Run with Library Manager, NOT fc_shell:
+##  Run with Library Manager, NOT fc_shell, once the kit is loaded:
 ##
-##      tools/syn tsmc65LP
-##      lm_shell -f tools/build_ndm.tcl
+##      lm_shell -f $SYN_TOOLS_DIR/build_ndm.tcl
 ##
-##  Build once, then every lab points create_lib at the result.
-##  A setup step, not a lab step. Output is about 36 MB on disk.
-##
-##  Built from LEF plus db because the kit ships Milkyway, not NDM.
+##  Build once, then point create_lib at the result. Output is about
+##  36 MB on disk. Built from LEF plus db because the kit ships
+##  Milkyway, not NDM.
 ##
 ####################################################################
 
@@ -28,9 +26,6 @@ file mkdir $NDM_DIR
 ####################################################################
 ## Application options
 ####################################################################
-# Only the ones addressing expected failure modes. Full vendor list is
-# in notes/ndm_creation.txt.
-
 # TSMC Liberty does not declare related_power_pin on every cell.
 set_app_options -as_user_default \
     -name lib.workspace.allow_missing_related_pg_pins -value true
@@ -45,9 +40,8 @@ set_app_options -as_user_default -name design.bus_delimiters -value {[]}
 ####################################################################
 ## Pass 1: timed cells
 ####################################################################
-# -flow normal takes physical from LEF and timing from one db per
-# corner. It emits only cells present in BOTH, so taps and fillers,
-# which have no timing arcs, are dropped here and picked up by pass 2.
+# -flow normal emits only cells present in both the LEF and the db, so
+# taps and fillers are dropped here and picked up by pass 2.
 
 create_workspace $LIB_NAME \
     -technology   $TECH_FILE \
@@ -65,8 +59,8 @@ foreach corner $CORNER_LABELS {
     read_db $db -process_label $corner
 }
 
-# Checks and commits in one step. On failure, rerun lm_shell
-# interactively and use "check_workspace -details all".
+# On failure, rerun lm_shell interactively and use
+# "check_workspace -details all".
 process_workspaces -force -directory $NDM_DIR -output ${LIB_NAME}_frame_timing.ndm
 
 remove_workspace
@@ -74,11 +68,10 @@ remove_workspace
 ####################################################################
 ## Pass 2: physical-only cells
 ####################################################################
-# -flow physical_only emits the cells found ONLY in the physical files,
-# so the taps and the FILL family. The db is read here too, and is not
-# redundant: it tells the flow which names to exclude, otherwise every
-# cell would be duplicated across the two libraries. One corner is
-# enough since all three db files hold the same cell set.
+# -flow physical_only emits the cells found only in the physical files,
+# so the taps and the FILL family. The db is read here to tell the flow
+# which names to exclude, or every cell would appear in both libraries.
+# One corner is enough: all three db files hold the same cell set.
 
 create_workspace ${LIB_NAME}_po \
     -technology   $TECH_FILE \
@@ -92,8 +85,34 @@ process_workspaces -force -directory $NDM_DIR -output ${LIB_NAME}_physical_only.
 
 remove_workspace
 
+####################################################################
+## Result
+####################################################################
+# process_workspaces can return without writing anything, so check the
+# outputs are on disk before claiming success. Without the exit,
+# lm_shell drops into an interactive prompt.
+
+set missing {}
+foreach lib $REF_LIBS {
+    if { ![file exists $lib] } { lappend missing $lib }
+}
+
 puts "=========================================="
-puts " Built in $NDM_DIR"
+puts " NDM directory : $NDM_DIR"
 puts "   ${LIB_NAME}_frame_timing.ndm   corners: $CORNER_LABELS"
 puts "   ${LIB_NAME}_physical_only.ndm  taps and fillers"
+puts "------------------------------------------"
+
+if { [llength $missing] } {
+    puts " BUILD FAILED. Not written:"
+    foreach lib $missing { puts "   $lib" }
+    puts ""
+    puts " Search this log upwards for the first \"Error\" line."
+    puts "=========================================="
+    exit 1
+}
+
+puts " BUILD OK. Now check the contents:"
+puts "   fc_shell -f \$SYN_TOOLS_DIR/check_ndm.tcl"
 puts "=========================================="
+exit 0

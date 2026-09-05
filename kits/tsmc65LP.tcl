@@ -6,7 +6,7 @@
 ##  Date:     2026-08-23
 ##  Version:  1.0
 ##
-##  Sourced at the top of every lab script:
+##  Sourced at the top of every flow script:
 ##
 ##      source $env(SYN_KIT_TCL)
 ##
@@ -24,6 +24,10 @@ set TLUPLUS_MAX $env(SYN_TLUPLUS_MAX)
 set TLUPLUS_MIN $env(SYN_TLUPLUS_MIN)
 set TLUPLUS_TYP $env(SYN_TLUPLUS_TYP)
 
+# Stream out.
+set GDS_MAP     $env(SYN_GDS_MAP)
+set CELL_GDS    $env(SYN_CELL_GDS)
+
 ####################################################################
 ## Database units
 ####################################################################
@@ -37,9 +41,9 @@ set SCALE_FACTOR 1000
 ## Corners
 ####################################################################
 # Labels are assigned at NDM build time by read_db -process_label and
-# selected at flow time by set_process_label. They match the suffix on
-# the kit .db filenames. Voltage and temperature are read out of the
-# .lib nom_voltage/nom_temperature fields, not chosen.
+# selected by set_process_label. They match the suffix on the kit .db
+# filenames. Voltage and temperature come from the .lib
+# nom_voltage/nom_temperature fields.
 #
 #   wc  worst case  1.08V  125C  slow
 #   tc  typical     1.20V   25C
@@ -71,17 +75,14 @@ set SITE_NAME unit
 set SITE_SYMMETRY Y
 
 # The tech file gives every layer an "unknown" preferred direction, so
-# compile_logical warns NEX-001 and the tool auto-derives with DPUI-924
-# per layer. Setting them explicitly silences both. Values read from the
+# setting them explicitly silences NEX-001 and DPUI-924. Values from the
 # LEF DIRECTION fields: odd layers horizontal, even vertical.
 
 set HORIZONTAL_LAYERS { M1 M3 M5 M7 M9 }
 set VERTICAL_LAYERS   { M2 M4 M6 M8 }
 
-# Ring layers follow: horizontal segment on a horizontal layer, vertical
-# on a vertical one. Not M1 - the cell rails are on M1, so a ring
-# segment there is a short, not a crossing (12 shorts from check_pg_drc
-# when this was first tried). Vias connect the M2/M3 ring down to M1.
+# Not M1: the cell rails are on M1, so a ring segment there is a short
+# rather than a crossing. Vias connect the M2/M3 ring down to M1.
 
 set RING_H_LAYER M3
 set RING_V_LAYER M2
@@ -94,8 +95,8 @@ set RAIL_LAYER M1
 ## Special cells
 ####################################################################
 
-# set_driving_cell in the SDC: a mid-strength inverter standing in for
-# whatever drives this block. The library has INVD0 through INVD12.
+# For set_driving_cell: a mid-strength inverter. The library has INVD0
+# through INVD12.
 
 set DRIVE_CELL  INVD2BWP7T
 
@@ -129,13 +130,15 @@ set GND_NET VSS
 ####################################################################
 ## Sanity check
 ####################################################################
-# Confirm every kit input exists before a flow starts. A missing RC
-# file is only a warning and silently leaves layers with no parasitics.
+# A missing RC file is only a warning, and silently leaves layers with
+# no parasitics.
 
 proc check_kit {} {
     global TECH_FILE REF_LIBS TLUPLUS_MAX TLUPLUS_MIN TLUPLUS_TYP
+    global GDS_MAP CELL_GDS
     set missing {}
-    foreach f [concat [list $TECH_FILE $TLUPLUS_MAX $TLUPLUS_MIN $TLUPLUS_TYP] \
+    foreach f [concat [list $TECH_FILE $TLUPLUS_MAX $TLUPLUS_MIN $TLUPLUS_TYP \
+                            $GDS_MAP $CELL_GDS] \
                       $REF_LIBS] {
         if { ![file exists $f] } { lappend missing $f }
     }
